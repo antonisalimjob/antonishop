@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --bg: #f4f7f8;
+  --ink: #0f1f24;
+  --muted: #5b6b72;
+  --line: #d7e2e6;
+  --brand: #0f766e;
+  --brand-dark: #115e59;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+.surface {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+}
+
+.hero-grid {
+  background-image:
+    radial-gradient(at 20% 20%, rgb(20 184 166 / 0.18), transparent 45%),
+    radial-gradient(at 80% 0%, rgb(99 102 241 / 0.16), transparent 40%),
+    radial-gradient(at 80% 80%, rgb(14 165 233 / 0.12), transparent 40%);
+}
