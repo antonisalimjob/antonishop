@@ -1,12 +1,8 @@
-import { Suspense } from "react";
-import LoginClient from "./login-client";
-
-export const metadata = { title: "Masuk" };
-
-export default function LoginPage() {
-  return (
-    <Suspense>
-      <LoginClient />
-    </Suspense>
-  );
+const handleGoogleLogin = async () => {
+  await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${window.location.origin}/shop/auth/callback`,
+    },
+  })
 }
