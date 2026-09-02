@@ -42,19 +42,16 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname
 
-  // Bypassing middleware untuk route callback agar tidak di-redirect
   if (path.includes('/auth/callback')) {
     return response
   }
 
-  // Jika belum login dan mengakses halaman akun
   if (!user && (path.endsWith('/account') || path.includes('/account'))) {
     const url = request.nextUrl.clone()
     url.pathname = '/shop/login'
     return NextResponse.redirect(url)
   }
 
-  // Jika sudah login dan masih di halaman login, arahkan ke akun
   if (user && (path.endsWith('/login') || path.includes('/login'))) {
     const url = request.nextUrl.clone()
     url.pathname = '/shop/account'
