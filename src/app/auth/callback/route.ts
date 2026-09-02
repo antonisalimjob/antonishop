@@ -20,7 +20,12 @@ export async function GET(request: Request) {
           setAll(cookiesToSet) {
             try {
               cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, { ...options, path: '/' })
+                cookieStore.set(name, value, {
+                  ...options,
+                  path: '/',
+                  sameSite: 'lax',
+                  secure: process.env.NODE_ENV === 'production',
+                })
               )
             } catch {
               // Terjadi jika dipanggil dari Server Component
