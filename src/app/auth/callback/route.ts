@@ -9,6 +9,10 @@ export async function GET(request: Request) {
 
   if (code) {
     const cookieStore = await cookies()
+    
+    // Siapkan response redirect terlebih dahulu
+    const response = NextResponse.redirect(`${origin}/shop${next}`)
+
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -18,27 +22,28 @@ export async function GET(request: Request) {
             return cookieStore.getAll()
           },
           setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, {
-                  ...options,
-                  path: '/',
-                  sameSite: 'lax',
-                  secure: true,
-                })
-              )
-            } catch {
-              // Ignore inside Server Component
-            }
+            cookiesToSet.forEach(({ name, value, options }) => {
+              // Tulis cookie ke cookieStore dan ke objek response langsung
+              cookieStore.set(name, value, { ...options, path: '/' })
+              response.cookies.set(name, value, {
+                ...options,
+                path: '/',
+                sameSite: 'lax',
+                secure: true,
+              })
+            })
           },
         },
       }
     )
 
     const { error } = await supabase.auth.exchangeCodeForSession(code)
+
     if (!error) {
-      return NextResponse.redirect(`${origin}/shop${next}`)
+      return response
     }
+    
+    console.error('Supabase Auth Exchange Error:', error.message)
   }
 
   return NextResponse.redirect(`${origin}/shop/login?error=auth-failed`)
