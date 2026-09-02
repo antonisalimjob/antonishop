@@ -24,11 +24,11 @@ export async function GET(request: Request) {
                   ...options,
                   path: '/',
                   sameSite: 'lax',
-                  secure: process.env.NODE_ENV === 'production',
+                  secure: true,
                 })
               )
             } catch {
-              // Terjadi jika dipanggil dari Server Component
+              // Ignore inside Server Component
             }
           },
         },
