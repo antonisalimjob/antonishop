@@ -20,7 +20,7 @@ export async function GET(request: Request) {
           setAll(cookiesToSet) {
             try {
               cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
+                cookieStore.set(name, value, { ...options, path: '/' })
               )
             } catch {
               // Abaikan jika dipanggil dari Server Component
@@ -32,6 +32,7 @@ export async function GET(request: Request) {
 
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
+      // Pastikan mengarahkan ke halaman tujuan
       return NextResponse.redirect(`${origin}/shop${next}`)
     }
   }
