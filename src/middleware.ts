@@ -26,7 +26,7 @@ export async function middleware(request: NextRequest) {
               ...options,
               path: '/',
               sameSite: 'lax',
-              secure: process.env.NODE_ENV === 'production',
+              secure: true,
             })
           )
         },
@@ -38,6 +38,7 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Hanya redirect jika mencoba akses /account tanpa session
   if (!user && request.nextUrl.pathname.includes('/account')) {
     const url = request.nextUrl.clone()
     url.pathname = '/shop/login'
