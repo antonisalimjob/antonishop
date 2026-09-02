@@ -36,36 +36,29 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Gunakan getUser untuk validasi session server-side
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const pathname = request.nextUrl.pathname
+  const path = request.nextUrl.pathname
 
-  // Proteksi rute /account
-  if (!user && pathname.includes('/account')) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/shop/login'
-    
-    // Salin cookie dari response ke redirectResponse agar tidak hilang
-    const redirectResponse = NextResponse.redirect(url)
-    response.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie.name, cookie.value)
-    })
-    return redirectResponse
+  // Bypassing middleware untuk route callback agar tidak di-redirect
+  if (path.includes('/auth/callback')) {
+    return response
   }
 
-  // Jika user SUDAH login tapi mencoba buka /login, lempar ke /account
-  if (user && pathname.includes('/login')) {
+  // Jika belum login dan mengakses halaman akun
+  if (!user && (path.endsWith('/account') || path.includes('/account'))) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/shop/login'
+    return NextResponse.redirect(url)
+  }
+
+  // Jika sudah login dan masih di halaman login, arahkan ke akun
+  if (user && (path.endsWith('/login') || path.includes('/login'))) {
     const url = request.nextUrl.clone()
     url.pathname = '/shop/account'
-    
-    const redirectResponse = NextResponse.redirect(url)
-    response.cookies.getAll().forEach((cookie) => {
-      redirectResponse.cookies.set(cookie.name, cookie.value)
-    })
-    return redirectResponse
+    return NextResponse.redirect(url)
   }
 
   return response
