@@ -1,11 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
+export async function updateSession(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({
+    request,
   })
 
   const supabase = createServerClient(
@@ -17,14 +15,12 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          )
-          response = NextResponse.next({
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          supabaseResponse = NextResponse.next({
             request,
           })
           cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, { ...options, path: '/' })
+            supabaseResponse.cookies.set(name, value, { ...options, path: '/' })
           )
         },
       },
@@ -35,18 +31,16 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Jika user mencoba buka halaman /account tapi belum login, lempar ke login
-  if (!user && request.nextUrl.pathname.includes('/account')) {
+  if (
+    !user &&
+    !request.nextUrl.pathname.startsWith('/shop/login') &&
+    !request.nextUrl.pathname.startsWith('/shop/auth') &&
+    request.nextUrl.pathname.includes('/account')
+  ) {
     const url = request.nextUrl.clone()
     url.pathname = '/shop/login'
     return NextResponse.redirect(url)
   }
 
-  return response
-}
-
-export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
-  ],
+  return supabaseResponse
 }
