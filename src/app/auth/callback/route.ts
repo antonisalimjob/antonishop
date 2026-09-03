@@ -1,12 +1,3 @@
-// Ambil parameter next, default ke /account
-const next = searchParams.get('next') ?? '/account'
-
-// Pastikan selalu berawalan /shop
-const formattedNext = next.startsWith('/shop') ? next : `/shop${next}`
-const redirectUrl = `${origin}${formattedNext}`
-
-const response = NextResponse.redirect(redirectUrl)
-
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
@@ -14,15 +5,14 @@ import { NextResponse } from 'next/server'
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  
+  // Ambil parameter next dan pastikan selalu berawalan /shop
   const next = searchParams.get('next') ?? '/account'
+  const formattedNext = next.startsWith('/shop') ? next : `/shop${next}`
+  const redirectUrl = `${origin}${formattedNext}`
 
   if (code) {
     const cookieStore = await cookies()
-    
-    const redirectUrl = next.startsWith('/shop') 
-      ? `${origin}${next}` 
-      : `${origin}/shop${next}`
-      
     const response = NextResponse.redirect(redirectUrl)
 
     const supabase = createServerClient(
@@ -53,8 +43,8 @@ export async function GET(request: Request) {
     if (!error) {
       return response
     }
-    
-    console.error('Supabase Auth Exchange Error:', error.message)
+
+    console.error('Exchange Code Error Detail:', error)
   }
 
   return NextResponse.redirect(`${origin}/shop/login?error=auth-failed`)
