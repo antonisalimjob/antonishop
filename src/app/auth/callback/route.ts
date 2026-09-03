@@ -1,3 +1,12 @@
+// Ambil parameter next, default ke /account
+const next = searchParams.get('next') ?? '/account'
+
+// Pastikan selalu berawalan /shop
+const formattedNext = next.startsWith('/shop') ? next : `/shop${next}`
+const redirectUrl = `${origin}${formattedNext}`
+
+const response = NextResponse.redirect(redirectUrl)
+
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
