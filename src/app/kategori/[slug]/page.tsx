@@ -1,22 +1,28 @@
-import { notFound } from "next/navigation";
-import { ProductCard } from "@/components/product-card";
-import { getCategoryBySlug, getProducts } from "@/lib/queries";
+import { notFound } from 'next/navigation'
 
-export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const category = await getCategoryBySlug(slug);
-  if (!category) notFound();
-  const products = await getProducts({ categorySlug: slug });
+interface PageProps {
+  params: Promise<{
+    slug: string
+  }>
+}
+
+export default async function CategoryPage({ params }: PageProps) {
+  const { slug } = await params
+
+  if (!slug) {
+    return notFound()
+  }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">Kategori</p>
-      <h1 className="mt-1 text-2xl font-semibold">{category.name}</h1>
-      <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {products.map((p) => (
-          <ProductCard key={p.id} product={p} />
-        ))}
+    <main className="container mx-auto min-h-screen px-4 py-8">
+      <div className="rounded-xl border bg-card p-6 shadow-sm">
+        <h1 className="text-2xl font-bold text-foreground capitalize">
+          Kategori: {slug.replace(/-/g, ' ')}
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Menampilkan produk untuk kategori <code className="rounded bg-muted px-2 py-1">{slug}</code>
+        </p>
       </div>
-    </div>
-  );
+    </main>
+  )
 }
