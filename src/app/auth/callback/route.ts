@@ -1,4 +1,4 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -10,8 +10,11 @@ export async function GET(request: Request) {
   if (code) {
     const cookieStore = await cookies()
     
-    // Siapkan response redirect terlebih dahulu
-    const response = NextResponse.redirect(`${origin}/shop${next}`)
+    const redirectUrl = next.startsWith('/shop') 
+      ? `${origin}${next}` 
+      : `${origin}/shop${next}`
+      
+    const response = NextResponse.redirect(redirectUrl)
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -21,9 +24,8 @@ export async function GET(request: Request) {
           getAll() {
             return cookieStore.getAll()
           },
-          setAll(cookiesToSet) {
+          setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
             cookiesToSet.forEach(({ name, value, options }) => {
-              // Tulis cookie ke cookieStore dan ke objek response langsung
               cookieStore.set(name, value, { ...options, path: '/' })
               response.cookies.set(name, value, {
                 ...options,
