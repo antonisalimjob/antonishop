@@ -1,49 +1,153 @@
-import Link from "next/link";
-import { STATUS_LABEL } from "@/lib/config";
-import { formatRupiah } from "@/lib/format";
-import { createClient } from "@/lib/supabase/server";
-import type { Order } from "@/types/database";
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
+import Link from 'next/link'
 
-export default async function AdminHome() {
-  const supabase = await createClient();
-  const [{ count: pending }, { count: processing }, { count: chats }, { data: recent }] = await Promise.all([
-    supabase.from("orders").select("*", { count: "exact", head: true }).eq("status", "verifying"),
-    supabase.from("orders").select("*", { count: "exact", head: true }).eq("status", "processing"),
-    supabase.from("chat_messages").select("*", { count: "exact", head: true }),
-    supabase.from("orders").select("*").order("created_at", { ascending: false }).limit(8),
-  ]);
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>
+}) {
+  const { tab = 'overview' } = await searchParams
+  const cookieStore = await cookies()
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+      },
+    }
+  )
+
+  // 1. Cek User & Role Admin
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/shop/login')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (profile?.role !== 'admin') redirect('/shop')
+
+  // 2. Ambil Data Produk (Jika Tab Produk Aktif)
+  const { data: products } = await supabase
+    .from('products')
+    .select('*')
+    .order('created_at', { ascending: false })
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold">Panel admin</h1>
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <div className="surface p-5">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Menunggu verifikasi</p>
-          <p className="mt-2 text-3xl font-bold">{pending ?? 0}</p>
-        </div>
-        <div className="surface p-5">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Diproses</p>
-          <p className="mt-2 text-3xl font-bold">{processing ?? 0}</p>
-        </div>
-        <div className="surface p-5">
-          <p className="text-xs uppercase tracking-wide text-slate-500">Pesan chat</p>
-          <p className="mt-2 text-3xl font-bold">{chats ?? 0}</p>
-        </div>
+    <main className="container mx-auto min-h-screen px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">Panel admin</h1>
+
+      {/* Navigasi Tab Admin */}
+      <div className="flex gap-2 mb-8">
+        <Link
+          href="/admin?tab=overview"
+          className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+            tab === 'overview' ? 'bg-white border shadow-sm font-bold' : 'bg-gray-100 text-gray-600'
+          }`}
+        >
+          Ringkasan
+        </Link>
+        <Link
+          href="/admin?tab=products"
+          className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+            tab === 'products' ? 'bg-white border shadow-sm font-bold' : 'bg-gray-100 text-gray-600'
+          }`}
+        >
+          Produk
+        </Link>
+        <Link
+          href="/admin?tab=orders"
+          className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+            tab === 'orders' ? 'bg-white border shadow-sm font-bold' : 'bg-gray-100 text-gray-600'
+          }`}
+        >
+          Pesanan
+        </Link>
+        <Link
+          href="/admin?tab=chat"
+          className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+            tab === 'chat' ? 'bg-white border shadow-sm font-bold' : 'bg-gray-100 text-gray-600'
+          }`}
+        >
+          Live chat
+        </Link>
       </div>
-      <h2 className="mt-10 font-semibold">Pesanan terbaru</h2>
-      <ul className="mt-3 divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-        {((recent as Order[]) ?? []).map((o) => (
-          <li key={o.id}>
-            <Link href={`/admin/pesanan/${o.id}`} className="flex items-center justify-between px-4 py-3 hover:bg-slate-50">
-              <p className="font-mono text-sm">{o.id.slice(0, 8).toUpperCase()}</p>
-              <div className="text-right text-sm">
-                <p>{STATUS_LABEL[o.status]}</p>
-                <p className="font-semibold">{formatRupiah(o.total_amount)}</p>
-              </div>
+
+      {/* Konten Tab Ringkasan */}
+      {tab === 'overview' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="border bg-white rounded-2xl p-6 shadow-sm">
+            <p className="text-xs font-semibold text-gray-500 uppercase">Menunggu Verifikasi</p>
+            <p className="text-4xl font-bold mt-2">0</p>
+          </div>
+          <div className="border bg-white rounded-2xl p-6 shadow-sm">
+            <p className="text-xs font-semibold text-gray-500 uppercase">Diproses</p>
+            <p className="text-4xl font-bold mt-2">0</p>
+          </div>
+          <div className="border bg-white rounded-2xl p-6 shadow-sm">
+            <p className="text-xs font-semibold text-gray-500 uppercase">Pesan Chat</p>
+            <p className="text-4xl font-bold mt-2">0</p>
+          </div>
+        </div>
+      )}
+
+      {/* Konten Tab Produk (Add, Edit, Delete) */}
+      {tab === 'products' && (
+        <div className="border bg-white rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold">Kelola Produk</h2>
+            <Link
+              href="/admin/products/new"
+              className="bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+            >
+              + Tambah Produk Baru
             </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b text-sm text-gray-500">
+                  <th className="py-3 px-2">Nama Produk</th>
+                  <th className="py-3 px-2">Kategori</th>
+                  <th className="py-3 px-2">Harga</th>
+                  <th className="py-3 px-2 text-right">Aksi</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products && products.length > 0 ? (
+                  products.map((item) => (
+                    <tr key={item.id} className="border-b hover:bg-gray-50">
+                      <td className="py-3 px-2 font-medium">{item.name}</td>
+                      <td className="py-3 px-2 text-sm text-gray-600">{item.category_slug}</td>
+                      <td className="py-3 px-2 text-sm">Rp {item.price?.toLocaleString('id-ID')}</td>
+                      <td className="py-3 px-2 text-right space-x-2">
+                        <Link href={`/admin/products/edit/${item.id}`} className="text-xs text-blue-600 hover:underline">
+                          Edit
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="py-6 text-center text-sm text-gray-500">
+                      Belum ada produk. Klik "+ Tambah Produk Baru" untuk menambahkan.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </main>
+  )
 }
