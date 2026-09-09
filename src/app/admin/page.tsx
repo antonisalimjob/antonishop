@@ -3,12 +3,13 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
-export default async function AdminPage({
-  searchParams,
-}: {
+type Props = {
   searchParams: Promise<{ tab?: string }>
-}) {
-  const { tab = 'overview' } = await searchParams
+}
+
+export default async function AdminPage({ searchParams }: Props) {
+  const resolvedParams = await searchParams
+  const tab = resolvedParams?.tab || 'overview'
   const cookieStore = await cookies()
 
   const supabase = createServerClient(
@@ -23,7 +24,6 @@ export default async function AdminPage({
     }
   )
 
-  // 1. Cek User & Role Admin
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/shop/login')
 
@@ -35,7 +35,6 @@ export default async function AdminPage({
 
   if (profile?.role !== 'admin') redirect('/shop')
 
-  // 2. Ambil Data Produk (Jika Tab Produk Aktif)
   const { data: products } = await supabase
     .from('products')
     .select('*')
@@ -45,12 +44,12 @@ export default async function AdminPage({
     <main className="container mx-auto min-h-screen px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">Panel admin</h1>
 
-      {/* Navigasi Tab Admin */}
+      {/* Navigasi Tab */}
       <div className="flex gap-2 mb-8">
         <Link
           href="/admin?tab=overview"
           className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-            tab === 'overview' ? 'bg-white border shadow-sm font-bold' : 'bg-gray-100 text-gray-600'
+            tab === 'overview' ? 'bg-white border shadow-sm font-bold text-black' : 'bg-gray-100 text-gray-600'
           }`}
         >
           Ringkasan
@@ -58,7 +57,7 @@ export default async function AdminPage({
         <Link
           href="/admin?tab=products"
           className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-            tab === 'products' ? 'bg-white border shadow-sm font-bold' : 'bg-gray-100 text-gray-600'
+            tab === 'products' ? 'bg-white border shadow-sm font-bold text-black' : 'bg-gray-100 text-gray-600'
           }`}
         >
           Produk
@@ -66,7 +65,7 @@ export default async function AdminPage({
         <Link
           href="/admin?tab=orders"
           className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-            tab === 'orders' ? 'bg-white border shadow-sm font-bold' : 'bg-gray-100 text-gray-600'
+            tab === 'orders' ? 'bg-white border shadow-sm font-bold text-black' : 'bg-gray-100 text-gray-600'
           }`}
         >
           Pesanan
@@ -74,14 +73,14 @@ export default async function AdminPage({
         <Link
           href="/admin?tab=chat"
           className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-            tab === 'chat' ? 'bg-white border shadow-sm font-bold' : 'bg-gray-100 text-gray-600'
+            tab === 'chat' ? 'bg-white border shadow-sm font-bold text-black' : 'bg-gray-100 text-gray-600'
           }`}
         >
           Live chat
         </Link>
       </div>
 
-      {/* Konten Tab Ringkasan */}
+      {/* Tab Ringkasan */}
       {tab === 'overview' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="border bg-white rounded-2xl p-6 shadow-sm">
@@ -99,7 +98,7 @@ export default async function AdminPage({
         </div>
       )}
 
-      {/* Konten Tab Produk (Add, Edit, Delete) */}
+      {/* Tab Kelola Produk */}
       {tab === 'products' && (
         <div className="border bg-white rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
@@ -139,7 +138,7 @@ export default async function AdminPage({
                 ) : (
                   <tr>
                     <td colSpan={4} className="py-6 text-center text-sm text-gray-500">
-                      Belum ada produk. Klik "+ Tambah Produk Baru" untuk menambahkan.
+                      Belum ada produk. Klik &quot;+ Tambah Produk Baru&quot; untuk menambahkan.
                     </td>
                   </tr>
                 )}
