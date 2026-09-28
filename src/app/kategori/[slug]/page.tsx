@@ -43,6 +43,9 @@ export default async function CategoryPage({ params }: PageProps) {
     .eq('category_slug', slug)
     .order('created_at', { ascending: false })
 
+  // Nomor WhatsApp tujuan pemesanan (ganti jika perlu)
+  const waNumber = '628161995186'
+
   return (
     <main className="container mx-auto min-h-screen px-4 py-8">
       {/* Header Kategori */}
@@ -70,37 +73,56 @@ export default async function CategoryPage({ params }: PageProps) {
       {/* Grid Daftar Produk */}
       <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {products && products.length > 0 ? (
-          products.map((product) => (
-            <div
-              key={product.id}
-              className="flex flex-col justify-between rounded-2xl border bg-white p-6 shadow-sm border-slate-200 hover:shadow-md transition"
-            >
-              <div>
-                <h3 className="font-bold text-lg text-slate-800">{product.name}</h3>
-                <p className="mt-2 text-sm text-gray-600 line-clamp-3">
-                  {product.description || 'Tidak ada deskripsi.'}
-                </p>
-              </div>
+          products.map((product) => {
+            const waMessage = encodeURIComponent(
+              `Halo AntoniHost, saya ingin memesan:\n\n*Produk:* ${product.name}\n*Harga:* Rp ${Number(product.price).toLocaleString('id-ID')}\n\nMohon info langkah selanjutnya. Terima kasih!`
+            )
+            const waUrl = `https://wa.me/${waNumber}?text=${waMessage}`
 
-              <div className="mt-6 border-t pt-4 flex items-center justify-between">
+            return (
+              <div
+                key={product.id}
+                className="flex flex-col justify-between rounded-2xl border bg-white p-6 shadow-sm border-slate-200 hover:shadow-md transition"
+              >
                 <div>
-                  <p className="text-xs text-gray-400 uppercase font-semibold">Harga</p>
-                  <p className="text-lg font-extrabold text-emerald-700">
-                    Rp {Number(product.price).toLocaleString('id-ID')}
+                  <h3 className="font-bold text-lg text-slate-800">{product.name}</h3>
+                  <p className="mt-2 text-sm text-gray-600 line-clamp-3">
+                    {product.description || 'Tidak ada deskripsi.'}
                   </p>
                 </div>
 
-                {isAdmin && (
-                  <Link
-                    href={`/admin/products/edit/${product.id}`}
-                    className="text-xs font-semibold text-blue-600 hover:underline"
+                <div className="mt-6 border-t pt-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-xs text-gray-400 uppercase font-semibold">Harga</p>
+                      <p className="text-xl font-extrabold text-emerald-700">
+                        Rp {Number(product.price).toLocaleString('id-ID')}
+                      </p>
+                    </div>
+
+                    {isAdmin && (
+                      <Link
+                        href={`/admin/products/edit/${product.id}`}
+                        className="text-xs font-semibold text-blue-600 hover:underline"
+                      >
+                        Edit
+                      </Link>
+                    )}
+                  </div>
+
+                  {/* Tombol Beli Langsung via WA (Tanpa Registrasi) */}
+                  <a
+                    href={waUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-800 transition"
                   >
-                    Edit
-                  </Link>
-                )}
+                    Beli Sekarang
+                  </a>
+                </div>
               </div>
-            </div>
-          ))
+            )
+          })
         ) : (
           <div className="col-span-full rounded-2xl border border-dashed bg-white p-12 text-center">
             <p className="text-gray-500 font-medium">Belum ada produk di kategori ini.</p>
