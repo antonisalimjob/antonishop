@@ -22,7 +22,6 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([])
 
-  // Load keranjang dari localStorage saat pertama kali dibuka
   useEffect(() => {
     const savedCart = localStorage.getItem('klikada_cart')
     if (savedCart) {
@@ -34,7 +33,6 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [])
 
-  // Simpan ke localStorage setiap ada perubahan keranjang
   useEffect(() => {
     localStorage.setItem('klikada_cart', JSON.stringify(cart))
   }, [cart])
