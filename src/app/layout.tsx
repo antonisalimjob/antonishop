@@ -19,11 +19,8 @@ export default function RootLayout({
   return (
     <html lang="id">
       <body className={inter.className}>
-        {/* Bungkus seluruh aplikasi dengan CartProvider */}
         <CartProvider>
           {children}
-          
-          {/* Komponen Keranjang Virtual Melayang di Pojok Kanan Bawah */}
           <CartDrawer />
         </CartProvider>
       </body>
