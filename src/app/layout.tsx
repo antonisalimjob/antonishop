@@ -1,34 +1,32 @@
-import type { Metadata, Viewport } from "next";
-import { Outfit } from "next/font/google";
-import { Providers } from "@/components/providers";
-import "./globals.css";
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+import { CartProvider } from '@/context/CartContext'
+import CartDrawer from '@/components/CartDrawer'
 
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-});
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: {
-    default: "AntoniHost Shop — Hardware, Akun Game & Jasa IT",
-    template: "%s · AntoniHost Shop",
-  },
-  description:
-    "Toko komputer, akun MLBB/HOK, dan jasa IT support. Checkout BCA atau DANA di antonihost.my.id/shop.",
-};
+  title: 'AntoniHost Shop',
+  description: 'Toko Online Hardware, Software, Akun Game, dan Jasa IT Support',
+}
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  themeColor: "#0f766e",
-};
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="id">
-      <body className={`${outfit.variable} antialiased`}>
-        <Providers>{children}</Providers>
+      <body className={inter.className}>
+        {/* Bungkus seluruh aplikasi dengan CartProvider */}
+        <CartProvider>
+          {children}
+          
+          {/* Komponen Keranjang Virtual Melayang di Pojok Kanan Bawah */}
+          <CartDrawer />
+        </CartProvider>
       </body>
     </html>
-  );
+  )
 }
